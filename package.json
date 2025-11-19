@@ -1,0 +1,54 @@
+{
+  "name": "identity-service",
+  "version": "1.0.0",
+  "description": "OAuth2 Identity Service with Client Credentials Flow",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "nodemon src/index.ts | npx pino-pretty",
+    "start": "node dist/src/index.js",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
+  },
+  "keywords": [
+    "oauth2",
+    "identity",
+    "jwt",
+    "authentication"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/uuid": "^11.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.11",
+    "dotenv": "^16.4.5",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.5.3",
+    "nanoid": "^5.0.7",
+    "pino": "^9.3.2",
+    "reflect-metadata": "^0.2.2",
+    "routing-controllers": "0.6.11",
+    "typedi": "0.8.0",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.5",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.12.7",
+    "@types/supertest": "^6.0.3",
+    "@vitest/coverage-v8": "^2.0.5",
+    "eslint": "9.39.1",
+    "nodemon": "^3.1.4",
+    "pino-pretty": "^11.2.2",
+    "supertest": "^7.1.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vitest": "^2.0.5"
+  }
+}
