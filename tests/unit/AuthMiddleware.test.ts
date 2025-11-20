@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
-import { AuthMiddleware } from '../../src/middlewares/AuthMiddleware.js';
-import { TokenService } from '../../src/services/TokenService.js';
-import { TokenPayload } from '../../src/types/TokenPayload.js';
+import { AuthMiddleware } from '../../src/middlewares/AuthMiddleware';
+import { TokenService } from '../../src/services/TokenService';
+import { TokenPayload } from '../../src/types/TokenPayload';
 
 describe('AuthMiddleware', () => {
   let middleware: AuthMiddleware;
@@ -104,7 +104,9 @@ describe('AuthMiddleware', () => {
       };
 
       // Mock TokenService.verifyAccessToken
-      (mockTokenService.verifyAccessToken as any).mockResolvedValue(mockPayload);
+      (mockTokenService.verifyAccessToken as any).mockResolvedValue(
+        mockPayload
+      );
 
       mockRequest.headers = { authorization: 'Bearer valid-token' };
 
@@ -127,7 +129,9 @@ describe('AuthMiddleware', () => {
       expiredError.name = 'TokenExpiredError';
       (expiredError as any).expiredAt = new Date('2024-01-01');
 
-      (mockTokenService.verifyAccessToken as any).mockRejectedValue(expiredError);
+      (mockTokenService.verifyAccessToken as any).mockRejectedValue(
+        expiredError
+      );
 
       mockRequest.headers = { authorization: 'Bearer expired-token' };
 
@@ -150,7 +154,9 @@ describe('AuthMiddleware', () => {
       const invalidError = new Error('Invalid signature');
       invalidError.name = 'JsonWebTokenError';
 
-      (mockTokenService.verifyAccessToken as any).mockRejectedValue(invalidError);
+      (mockTokenService.verifyAccessToken as any).mockRejectedValue(
+        invalidError
+      );
 
       mockRequest.headers = { authorization: 'Bearer invalid-signature-token' };
 
@@ -171,7 +177,9 @@ describe('AuthMiddleware', () => {
     it('should reject revoked token', async () => {
       const revokedError = new Error('Token has been revoked');
 
-      (mockTokenService.verifyAccessToken as any).mockRejectedValue(revokedError);
+      (mockTokenService.verifyAccessToken as any).mockRejectedValue(
+        revokedError
+      );
 
       mockRequest.headers = { authorization: 'Bearer revoked-token' };
 
@@ -192,7 +200,9 @@ describe('AuthMiddleware', () => {
     it('should handle generic authentication errors', async () => {
       const genericError = new Error('Something went wrong');
 
-      (mockTokenService.verifyAccessToken as any).mockRejectedValue(genericError);
+      (mockTokenService.verifyAccessToken as any).mockRejectedValue(
+        genericError
+      );
 
       mockRequest.headers = { authorization: 'Bearer problematic-token' };
 

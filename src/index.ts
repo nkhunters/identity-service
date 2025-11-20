@@ -2,20 +2,11 @@ import 'reflect-metadata'; // MUST BE FIRST
 import { createExpressServer, useContainer } from 'routing-controllers';
 import { Container } from 'typedi';
 import cors from 'cors';
-import { fileURLToPath } from 'url';
-import path, { dirname } from 'path';
-import { env } from './config/env.js';
-import { connectDatabase } from './config/database.js';
-import { logger } from './utils/logger.js';
-import { ApplicationController } from './controllers/ApplicationController.js';
-import { OAuthController } from './controllers/OAuthController.js';
-import { ExampleProtectedController } from './controllers/ExampleProtectedController.js';
-import { AuthMiddleware } from './middlewares/AuthMiddleware.js';
-import { HealthController } from './controllers/HealthController.js';
+import { env } from './config/env';
+import { connectDatabase } from './config/database';
+import { logger } from './utils/logger';
+import path from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-console.log(__dirname);
 // Set up TypeDI container
 useContainer(Container);
 
@@ -26,12 +17,8 @@ async function bootstrap() {
 
     // Create Express server with routing-controllers
     const app = createExpressServer({
-      controllers: [
-        HealthController,
-        ApplicationController,
-        OAuthController
-      ] as any,
-      middlewares: ['src/middlewares'],
+      controllers: [path.join(__dirname, '/controllers/*.ts')],
+      middlewares: [path.join(__dirname, '/middlewares/*.ts')],
       defaultErrorHandler: true
     });
 

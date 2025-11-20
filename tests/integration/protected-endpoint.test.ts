@@ -4,12 +4,12 @@ import request from 'supertest';
 import express from 'express';
 import { useExpressServer, useContainer } from 'routing-controllers';
 import { Container } from 'typedi';
-import { ApplicationController } from '../../src/controllers/ApplicationController.js';
-import { OAuthController } from '../../src/controllers/OAuthController.js';
-import { ExampleProtectedController } from '../../src/controllers/ExampleProtectedController.js';
-import { AuthMiddleware } from '../../src/middlewares/AuthMiddleware.js';
-import { connectDatabase, disconnectDatabase } from '../../src/config/database.js';
-import { Application } from '../../src/models/Application.model.js';
+import { ApplicationController } from '../../src/controllers/ApplicationController';
+import { OAuthController } from '../../src/controllers/OAuthController';
+import { ExampleProtectedController } from '../../src/controllers/ExampleProtectedController';
+import { AuthMiddleware } from '../../src/middlewares/AuthMiddleware';
+import { connectDatabase, disconnectDatabase } from '../../src/config/database';
+import { Application } from '../../src/models/Application.model';
 
 describe('Protected Endpoints - Integration Tests', () => {
   let app: any;
@@ -56,13 +56,11 @@ describe('Protected Endpoints - Integration Tests', () => {
     testClientId = appResponse.body.clientId;
 
     // Get access token for full permissions app
-    const tokenResponse = await request(app)
-      .post('/oauth/token')
-      .send({
-        grant_type: 'client_credentials',
-        client_id: testClientId,
-        client_secret: testClientSecret
-      });
+    const tokenResponse = await request(app).post('/oauth/token').send({
+      grant_type: 'client_credentials',
+      client_id: testClientId,
+      client_secret: testClientSecret
+    });
 
     validAccessToken = tokenResponse.body.access_token;
 
@@ -82,13 +80,11 @@ describe('Protected Endpoints - Integration Tests', () => {
     testClientIdNoTools = appResponseNoTools.body.clientId;
 
     // Get access token for limited permissions app
-    const tokenResponseNoTools = await request(app)
-      .post('/oauth/token')
-      .send({
-        grant_type: 'client_credentials',
-        client_id: testClientIdNoTools,
-        client_secret: testClientSecretNoTools
-      });
+    const tokenResponseNoTools = await request(app).post('/oauth/token').send({
+      grant_type: 'client_credentials',
+      client_id: testClientIdNoTools,
+      client_secret: testClientSecretNoTools
+    });
 
     accessTokenNoTools = tokenResponseNoTools.body.access_token;
   });
@@ -100,9 +96,7 @@ describe('Protected Endpoints - Integration Tests', () => {
 
   describe('GET /applications/:clientId', () => {
     it('should reject request without token', async () => {
-      await request(app)
-        .get(`/applications/${testClientId}`)
-        .expect(401);
+      await request(app).get(`/applications/${testClientId}`).expect(401);
     });
 
     it('should reject request with invalid token', async () => {
@@ -198,9 +192,7 @@ describe('Protected Endpoints - Integration Tests', () => {
     });
 
     it('should reject unauthenticated user', async () => {
-      await request(app)
-        .get('/protected/public-for-authenticated')
-        .expect(401);
+      await request(app).get('/protected/public-for-authenticated').expect(401);
     });
   });
 });

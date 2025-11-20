@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Container } from 'typedi';
-import { ApplicationService } from '../../src/services/ApplicationService.js';
-import { EncryptionService } from '../../src/services/EncryptionService.js';
-import { Application } from '../../src/models/Application.model.js';
-import { connectDatabase, disconnectDatabase } from '../../src/config/database.js';
+import { ApplicationService } from '../../src/services/ApplicationService';
+import { EncryptionService } from '../../src/services/EncryptionService';
+import { Application } from '../../src/models/Application.model';
+import { connectDatabase, disconnectDatabase } from '../../src/config/database';
 
 describe('ApplicationService', () => {
   let applicationService: ApplicationService;

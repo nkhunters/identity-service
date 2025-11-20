@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { env } from './env.js';
-import { logger } from '../utils/logger.js';
+import { env } from './env';
+import { logger } from '../utils/logger';
 
 export async function connectDatabase(): Promise<void> {
   const maxRetries = 5;
@@ -23,7 +23,7 @@ export async function connectDatabase(): Promise<void> {
       // Exponential backoff
       const delay = Math.min(1000 * Math.pow(2, retries), 10000);
       logger.info(`Retrying in ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }

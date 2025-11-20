@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Container } from 'typedi';
-import { EncryptionService } from '../../src/services/EncryptionService.js';
+import { EncryptionService } from '../../src/services/EncryptionService';
 
 describe('EncryptionService', () => {
   let encryptionService: EncryptionService;
@@ -49,7 +49,10 @@ describe('EncryptionService', () => {
     });
 
     it('should return false for invalid hash format', async () => {
-      const isValid = await encryptionService.verify('password', 'invalid-hash');
+      const isValid = await encryptionService.verify(
+        'password',
+        'invalid-hash'
+      );
 
       expect(isValid).toBe(false);
     });

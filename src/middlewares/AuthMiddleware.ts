@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { MiddlewareInterface } from 'routing-controllers';
+import { ExpressMiddlewareInterface } from 'routing-controllers';
 import { Service } from 'typedi';
-import { TokenService } from '../services/TokenService.js';
-import { AuthenticatedRequest } from '../types/AuthenticatedRequest.js';
-import { logger } from '../utils/logger.js';
+import { TokenService } from '../services/TokenService';
+import { AuthenticatedRequest } from '../types/AuthenticatedRequest';
+import { logger } from '../utils/logger';
 
 /**
  * Authentication Middleware
@@ -21,12 +21,10 @@ import { logger } from '../utils/logger.js';
  * - Revoked token
  */
 @Service()
-export class AuthMiddleware implements MiddlewareInterface {
-  constructor(
-    private tokenService: TokenService
-  ) {}
+export class AuthMiddleware implements ExpressMiddlewareInterface {
+  constructor(private tokenService: TokenService) {}
 
-  async use(req: any, res: any, next?: (err?: any) => any): Promise<any> {
+  async use(req: Request, res: Response, next?: NextFunction): Promise<any> {
     try {
       // Extract Authorization header
       const authHeader = req.headers.authorization;

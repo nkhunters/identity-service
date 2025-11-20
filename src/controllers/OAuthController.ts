@@ -1,19 +1,19 @@
 import { JsonController, Post, Body, HttpCode } from 'routing-controllers';
-import { Inject, Service } from 'typedi';
-import { ApplicationService } from '../services/ApplicationService.js';
-import { TokenService } from '../services/TokenService.js';
-import { TokenRequestDto } from '../dto/TokenRequestDto.js';
-import { TokenRefreshDto } from '../dto/TokenRefreshDto.js';
-import { TokenVerifyDto } from '../dto/TokenVerifyDto.js';
-import { TokenRevokeDto } from '../dto/TokenRevokeDto.js';
-import { logger } from '../utils/logger.js';
+import { Service } from 'typedi';
+import { ApplicationService } from '../services/ApplicationService';
+import { TokenService } from '../services/TokenService';
+import { TokenRequestDto } from '../dto/TokenRequestDto';
+import { TokenRefreshDto } from '../dto/TokenRefreshDto';
+import { TokenVerifyDto } from '../dto/TokenVerifyDto';
+import { TokenRevokeDto } from '../dto/TokenRevokeDto';
+import { logger } from '../utils/logger';
 
 @Service()
 @JsonController('/oauth')
 export class OAuthController {
   constructor(
-    @Inject() private applicationService: ApplicationService,
-    @Inject() private tokenService: TokenService
+    private applicationService: ApplicationService,
+    private tokenService: TokenService
   ) {}
 
   @Post('/token')
@@ -45,7 +45,10 @@ export class OAuthController {
     // Handle client_credentials grant type
     if (dto.grant_type === 'client_credentials') {
       const credentialsDto = dto as TokenRequestDto;
-      logger.info({ client_id: credentialsDto.client_id }, 'Token request received');
+      logger.info(
+        { client_id: credentialsDto.client_id },
+        'Token request received'
+      );
 
       // Validate credentials
       const application = await this.applicationService.validateCredentials(
@@ -54,7 +57,10 @@ export class OAuthController {
       );
 
       if (!application || !application.isActive) {
-        logger.warn({ client_id: credentialsDto.client_id }, 'Invalid credentials');
+        logger.warn(
+          { client_id: credentialsDto.client_id },
+          'Invalid credentials'
+        );
         throw new Error('Invalid client credentials');
       }
 
@@ -118,7 +124,10 @@ export class OAuthController {
 
       // Handle JsonWebTokenError (invalid signature, malformed token, etc.)
       if (error.name === 'JsonWebTokenError') {
-        logger.warn({ message: error.message }, 'Token verification failed: Invalid token');
+        logger.warn(
+          { message: error.message },
+          'Token verification failed: Invalid token'
+        );
         return {
           valid: false,
           error: 'Invalid token',

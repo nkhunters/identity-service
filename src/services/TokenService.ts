@@ -1,22 +1,22 @@
-import { Service, Inject } from 'typedi';
+import { Service } from 'typedi';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { ApplicationDocument } from '../models/Application.model.js';
-import { RefreshToken } from '../models/RefreshToken.model.js';
-import { RevokedToken } from '../models/RevokedToken.model.js';
-import { EncryptionService } from './EncryptionService.js';
-import { TokenPayload } from '../types/TokenPayload.js';
-import { JwtTokens } from '../types/JwtTokens.js';
-import { logger } from '../utils/logger.js';
-import { env } from '../config/env.js';
+import { ApplicationDocument } from '../models/Application.model';
+import { RefreshToken } from '../models/RefreshToken.model';
+import { RevokedToken } from '../models/RevokedToken.model';
+import { EncryptionService } from './EncryptionService';
+import { TokenPayload } from '../types/TokenPayload';
+import { JwtTokens } from '../types/JwtTokens';
+import { logger } from '../utils/logger';
+import { env } from '../config/env';
 
 @Service()
 export class TokenService {
-  constructor(
-    @Inject() private encryptionService: EncryptionService
-  ) {}
+  constructor(private encryptionService: EncryptionService) {}
 
-  async generateTokenPair(application: ApplicationDocument): Promise<JwtTokens> {
+  async generateTokenPair(
+    application: ApplicationDocument
+  ): Promise<JwtTokens> {
     // Generate unique JTI for both tokens
     const accessJti = uuidv4();
     const refreshJti = uuidv4();
@@ -159,10 +159,7 @@ export class TokenService {
       );
 
       if (!isValid) {
-        logger.warn(
-          { jti: payload.jti },
-          'Refresh token hash mismatch'
-        );
+        logger.warn({ jti: payload.jti }, 'Refresh token hash mismatch');
         throw new Error('Invalid refresh token');
       }
 
@@ -230,7 +227,9 @@ export class TokenService {
       }
 
       // Check if already revoked
-      const existingRevocation = await RevokedToken.findOne({ jti: payload.jti });
+      const existingRevocation = await RevokedToken.findOne({
+        jti: payload.jti
+      });
       if (existingRevocation) {
         logger.info({ jti: payload.jti }, 'Token already revoked');
         return { jti: payload.jti, tokenType };
@@ -248,10 +247,7 @@ export class TokenService {
 
       // If refresh token, also mark as revoked in RefreshToken collection
       if (tokenType === 'refresh') {
-        await RefreshToken.updateOne(
-          { jti: payload.jti },
-          { isRevoked: true }
-        );
+        await RefreshToken.updateOne({ jti: payload.jti }, { isRevoked: true });
       }
 
       logger.info(
@@ -271,7 +267,10 @@ export class TokenService {
     }
   }
 
-  async revokeAllTokensForClient(clientId: string, reason?: string): Promise<number> {
+  async revokeAllTokensForClient(
+    clientId: string,
+    reason?: string
+  ): Promise<number> {
     // Find all active refresh tokens for the client
     const refreshTokens = await RefreshToken.find({
       clientId,
@@ -284,10 +283,7 @@ export class TokenService {
     for (const rt of refreshTokens) {
       try {
         // Mark as revoked in RefreshToken collection
-        await RefreshToken.updateOne(
-          { jti: rt.jti },
-          { isRevoked: true }
-        );
+        await RefreshToken.updateOne({ jti: rt.jti }, { isRevoked: true });
 
         // Add to RevokedToken collection
         await RevokedToken.create({

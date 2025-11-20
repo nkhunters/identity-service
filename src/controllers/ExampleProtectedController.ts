@@ -1,8 +1,8 @@
 import { JsonController, Get, UseBefore, Req } from 'routing-controllers';
 import { Service } from 'typedi';
-import { AuthMiddleware } from '../middlewares/AuthMiddleware.js';
-import { AuthenticatedRequest } from '../types/AuthenticatedRequest.js';
-import { requireTools, requireApis } from '../utils/authorization.js';
+import { AuthMiddleware } from '../middlewares/AuthMiddleware';
+import { AuthenticatedRequest } from '../types/AuthenticatedRequest';
+import { requireTools, requireApis } from '../utils/authorization';
 
 /**
  * Example Protected Controller

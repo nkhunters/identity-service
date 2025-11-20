@@ -4,10 +4,10 @@ import request from 'supertest';
 import express from 'express';
 import { useExpressServer, useContainer } from 'routing-controllers';
 import { Container } from 'typedi';
-import { ApplicationController } from '../../src/controllers/ApplicationController.js';
-import { OAuthController } from '../../src/controllers/OAuthController.js';
-import { connectDatabase, disconnectDatabase } from '../../src/config/database.js';
-import { Application } from '../../src/models/Application.model.js';
+import { ApplicationController } from '../../src/controllers/ApplicationController';
+import { OAuthController } from '../../src/controllers/OAuthController';
+import { connectDatabase, disconnectDatabase } from '../../src/config/database';
+import { Application } from '../../src/models/Application.model';
 
 describe('Application API', () => {
   let app: any;
@@ -84,33 +84,45 @@ describe('Application API', () => {
     });
   });
 
-  describe('GET /applications/:clientId', () => {
+  describe('GET /applications/me', () => {
     it('should return application details without clientSecret', async () => {
       // Create application first
-      const createResponse = await request(app)
-        .post('/applications')
-        .send({
-          applicationName: 'GetTestApp',
-          description: 'Test',
-          clientSecret: 'secret',
-          financialId: 'FIN-GET-001',
-          channelId: 'CH-001'
-        });
+      const createResponse = await request(app).post('/applications').send({
+        applicationName: 'GetTestApp',
+        description: 'Test',
+        clientSecret: 'secret',
+        financialId: 'FIN-GET-001',
+        channelId: 'CH-001'
+      });
 
       const clientId = createResponse.body.clientId;
 
-      // Get application
+      // Get token for authentication
+      const tokenResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: 'secret'
+      });
+
+      const token = tokenResponse.body.access_token;
+
+      // Get application using token
       const getResponse = await request(app)
-        .get(`/applications/${clientId}`)
+        .get('/applications/me')
+        .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
       expect(getResponse.body.clientId).toBe(clientId);
       expect(getResponse.body.applicationName).toBe('GetTestApp');
       expect(getResponse.body.clientSecret).toBeUndefined(); // Never returned
     });
+
+    it('should reject without authentication', async () => {
+      await request(app).get('/applications/me').expect(401);
+    });
   });
 
-  describe('GET /applications/:clientId/3scale-credentials', () => {
+  describe('GET /applications/me/3scale-credentials', () => {
     let app3ScaleEnabled: any;
     let app3ScaleDisabled: any;
     let tokenEnabled: string;
@@ -118,94 +130,74 @@ describe('Application API', () => {
 
     beforeAll(async () => {
       // Create app with 3Scale enabled
-      const enabledResp = await request(app)
-        .post('/applications')
-        .send({
-          applicationName: '3ScaleEnabledIntegration',
-          description: 'Test with 3Scale',
-          clientSecret: 'secret-enabled',
-          financialId: 'FIN-3SCALE-INT-001',
-          channelId: 'CH-001',
-          isDeveloperPortalAPIsEnabled: true,
-          threeScaleClientId: '3scale-integration-id',
-          threeScaleClientSecret: '3scale-integration-secret'
-        });
+      const enabledResp = await request(app).post('/applications').send({
+        applicationName: '3ScaleEnabledIntegration',
+        description: 'Test with 3Scale',
+        clientSecret: 'secret-enabled',
+        financialId: 'FIN-3SCALE-INT-001',
+        channelId: 'CH-001',
+        isDeveloperPortalAPIsEnabled: true,
+        threeScaleClientId: '3scale-integration-id',
+        threeScaleClientSecret: '3scale-integration-secret'
+      });
 
       app3ScaleEnabled = enabledResp.body;
 
       // Get token for enabled app
-      const tokenEnabledResp = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: app3ScaleEnabled.clientId,
-          client_secret: 'secret-enabled'
-        });
+      const tokenEnabledResp = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: app3ScaleEnabled.clientId,
+        client_secret: 'secret-enabled'
+      });
 
       tokenEnabled = tokenEnabledResp.body.access_token;
 
       // Create app with 3Scale disabled
-      const disabledResp = await request(app)
-        .post('/applications')
-        .send({
-          applicationName: '3ScaleDisabledIntegration',
-          description: 'Test without 3Scale',
-          clientSecret: 'secret-disabled',
-          financialId: 'FIN-3SCALE-INT-002',
-          channelId: 'CH-001',
-          isDeveloperPortalAPIsEnabled: false
-        });
+      const disabledResp = await request(app).post('/applications').send({
+        applicationName: '3ScaleDisabledIntegration',
+        description: 'Test without 3Scale',
+        clientSecret: 'secret-disabled',
+        financialId: 'FIN-3SCALE-INT-002',
+        channelId: 'CH-001',
+        isDeveloperPortalAPIsEnabled: false
+      });
 
       app3ScaleDisabled = disabledResp.body;
 
       // Get token for disabled app
-      const tokenDisabledResp = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: app3ScaleDisabled.clientId,
-          client_secret: 'secret-disabled'
-        });
+      const tokenDisabledResp = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: app3ScaleDisabled.clientId,
+        client_secret: 'secret-disabled'
+      });
 
       tokenDisabled = tokenDisabledResp.body.access_token;
     });
 
     it('should return decrypted 3Scale credentials when enabled', async () => {
       const response = await request(app)
-        .get(`/applications/${app3ScaleEnabled.clientId}/3scale-credentials`)
+        .get('/applications/me/3scale-credentials')
         .set('Authorization', `Bearer ${tokenEnabled}`)
         .expect(200);
 
       expect(response.body.threeScaleClientId).toBe('3scale-integration-id');
-      expect(response.body.threeScaleClientSecret).toBe('3scale-integration-secret');
+      expect(response.body.threeScaleClientSecret).toBe(
+        '3scale-integration-secret'
+      );
       expect(response.body.message).toBeDefined();
     });
 
     it('should reject when 3Scale not enabled', async () => {
       await request(app)
-        .get(`/applications/${app3ScaleDisabled.clientId}/3scale-credentials`)
+        .get('/applications/me/3scale-credentials')
         .set('Authorization', `Bearer ${tokenDisabled}`)
         .expect(500); // ForbiddenError returns 500 with default error handler
     });
 
     it('should reject without authentication', async () => {
       await request(app)
-        .get(`/applications/${app3ScaleEnabled.clientId}/3scale-credentials`)
+        .get('/applications/me/3scale-credentials')
         .expect(401);
-    });
-
-    it('should reject when accessing other application credentials', async () => {
-      await request(app)
-        .get(`/applications/${app3ScaleEnabled.clientId}/3scale-credentials`)
-        .set('Authorization', `Bearer ${tokenDisabled}`) // Using wrong token
-        .expect(500); // ForbiddenError returns 500 with default error handler
-    });
-
-    it('should reject for non-existent application', async () => {
-      await request(app)
-        .get('/applications/nonexistent123/3scale-credentials')
-        .set('Authorization', `Bearer ${tokenEnabled}`)
-        .expect(500); // ForbiddenError returns 500 (clientId doesn't match token)
     });
   });
 });

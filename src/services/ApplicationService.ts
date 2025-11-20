@@ -1,19 +1,18 @@
-import { Service, Inject } from 'typedi';
-import { nanoid } from 'nanoid';
-import { Application, ApplicationDocument } from '../models/Application.model.js';
-import { EncryptionService } from './EncryptionService.js';
-import { CreateApplicationDto } from '../dto/CreateApplicationDto.js';
-import { logger } from '../utils/logger.js';
+import { Service } from 'typedi';
+import { Application, ApplicationDocument } from '../models/Application.model';
+import { EncryptionService } from './EncryptionService';
+import { CreateApplicationDto } from '../dto/CreateApplicationDto';
+import { logger } from '../utils/logger';
 
 @Service()
 export class ApplicationService {
-  constructor(
-    @Inject() private encryptionService: EncryptionService
-  ) {}
+  constructor(private encryptionService: EncryptionService) {}
 
-  async createApplication(dto: CreateApplicationDto): Promise<ApplicationDocument> {
+  async createApplication(
+    dto: CreateApplicationDto
+  ): Promise<ApplicationDocument> {
     // Generate unique 8-character clientId
-    const clientId = nanoid(8);
+    const clientId = Math.random().toString(36).substring(2, 10);
 
     // Hash clientSecret
     const hashedSecret = await this.encryptionService.hash(dto.clientSecret);
@@ -21,7 +20,9 @@ export class ApplicationService {
     // Encrypt 3Scale clientSecret if provided
     let encryptedThreeScaleSecret: string | undefined;
     if (dto.isDeveloperPortalAPIsEnabled && dto.threeScaleClientSecret) {
-      encryptedThreeScaleSecret = this.encryptionService.encrypt(dto.threeScaleClientSecret);
+      encryptedThreeScaleSecret = this.encryptionService.encrypt(
+        dto.threeScaleClientSecret
+      );
     }
 
     // Create application
@@ -40,7 +41,10 @@ export class ApplicationService {
       isActive: true
     });
 
-    logger.info({ clientId, applicationName: dto.applicationName }, 'Application created');
+    logger.info(
+      { clientId, applicationName: dto.applicationName },
+      'Application created'
+    );
 
     return application;
   }
@@ -49,7 +53,10 @@ export class ApplicationService {
     return Application.findOne({ clientId, isActive: true });
   }
 
-  async validateCredentials(clientId: string, clientSecret: string): Promise<ApplicationDocument | null> {
+  async validateCredentials(
+    clientId: string,
+    clientSecret: string
+  ): Promise<ApplicationDocument | null> {
     const application = await this.findByClientId(clientId);
 
     if (!application) {
@@ -57,7 +64,10 @@ export class ApplicationService {
     }
 
     // Verify clientSecret using timing-safe comparison
-    const isValid = await this.encryptionService.verify(clientSecret, application.clientSecret);
+    const isValid = await this.encryptionService.verify(
+      clientSecret,
+      application.clientSecret
+    );
 
     return isValid ? application : null;
   }

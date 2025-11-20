@@ -5,12 +5,12 @@ import jwt from 'jsonwebtoken';
 import express from 'express';
 import { useExpressServer, useContainer } from 'routing-controllers';
 import { Container } from 'typedi';
-import { ApplicationController } from '../../src/controllers/ApplicationController.js';
-import { OAuthController } from '../../src/controllers/OAuthController.js';
-import { connectDatabase, disconnectDatabase } from '../../src/config/database.js';
-import { Application } from '../../src/models/Application.model.js';
-import { RefreshToken } from '../../src/models/RefreshToken.model.js';
-import { RevokedToken } from '../../src/models/RevokedToken.model.js';
+import { ApplicationController } from '../../src/controllers/ApplicationController';
+import { OAuthController } from '../../src/controllers/OAuthController';
+import { connectDatabase, disconnectDatabase } from '../../src/config/database';
+import { Application } from '../../src/models/Application.model';
+import { RefreshToken } from '../../src/models/RefreshToken.model';
+import { RevokedToken } from '../../src/models/RevokedToken.model';
 
 describe('OAuth API', () => {
   let app: any;
@@ -103,16 +103,16 @@ describe('OAuth API', () => {
     });
 
     it('should store refresh token in database', async () => {
-      const response = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: testClientId,
-          client_secret: testClientSecret
-        });
+      const response = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: testClientId,
+        client_secret: testClientSecret
+      });
 
       const refreshPayload = jwt.decode(response.body.refresh_token) as any;
-      const storedToken = await RefreshToken.findOne({ jti: refreshPayload.jti });
+      const storedToken = await RefreshToken.findOne({
+        jti: refreshPayload.jti
+      });
 
       expect(storedToken).not.toBeNull();
       expect(storedToken?.clientId).toBe(testClientId);
@@ -121,26 +121,22 @@ describe('OAuth API', () => {
 
     it('should include 3Scale info when enabled', async () => {
       // Create app with 3Scale enabled
-      const app3scale = await request(app)
-        .post('/applications')
-        .send({
-          applicationName: 'OAuth3ScaleApp',
-          description: 'Test',
-          clientSecret: 'secret-3scale',
-          financialId: 'FIN-OAUTH-3SCALE',
-          channelId: 'CH-001',
-          isDeveloperPortalAPIsEnabled: true,
-          threeScaleClientId: '3scale-client-123',
-          threeScaleClientSecret: '3scale-secret-456'
-        });
+      const app3scale = await request(app).post('/applications').send({
+        applicationName: 'OAuth3ScaleApp',
+        description: 'Test',
+        clientSecret: 'secret-3scale',
+        financialId: 'FIN-OAUTH-3SCALE',
+        channelId: 'CH-001',
+        isDeveloperPortalAPIsEnabled: true,
+        threeScaleClientId: '3scale-client-123',
+        threeScaleClientSecret: '3scale-secret-456'
+      });
 
-      const tokenResponse = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: app3scale.body.clientId,
-          client_secret: 'secret-3scale'
-        });
+      const tokenResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: app3scale.body.clientId,
+        client_secret: 'secret-3scale'
+      });
 
       const payload = jwt.decode(tokenResponse.body.access_token) as any;
       expect(payload.isDeveloperPortalAPIsEnabled).toBe(true);
@@ -152,13 +148,11 @@ describe('OAuth API', () => {
   describe('POST /oauth/verify', () => {
     it('should verify valid access token', async () => {
       // First, get an access token
-      const tokenResponse = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: testClientId,
-          client_secret: testClientSecret
-        });
+      const tokenResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: testClientId,
+        client_secret: testClientSecret
+      });
 
       // Verify the token
       const verifyResponse = await request(app)
@@ -169,17 +163,25 @@ describe('OAuth API', () => {
       expect(verifyResponse.body.valid).toBe(true);
       expect(verifyResponse.body.payload).toBeDefined();
       expect(verifyResponse.body.payload.clientId).toBe(testClientId);
-      expect(verifyResponse.body.payload.allowedTools).toEqual(['tool1', 'tool2']);
-      expect(verifyResponse.body.payload.allowedApis).toEqual(['/api/users', '/api/products']);
+      expect(verifyResponse.body.payload.allowedTools).toEqual([
+        'tool1',
+        'tool2'
+      ]);
+      expect(verifyResponse.body.payload.allowedApis).toEqual([
+        '/api/users',
+        '/api/products'
+      ]);
       expect(verifyResponse.body.payload.jti).toBeDefined();
       expect(verifyResponse.body.payload.issuedAt).toBeDefined();
       expect(verifyResponse.body.payload.expiresAt).toBeDefined();
 
       // Verify ISO date format
-      expect(new Date(verifyResponse.body.payload.issuedAt).toISOString())
-        .toBe(verifyResponse.body.payload.issuedAt);
-      expect(new Date(verifyResponse.body.payload.expiresAt).toISOString())
-        .toBe(verifyResponse.body.payload.expiresAt);
+      expect(new Date(verifyResponse.body.payload.issuedAt).toISOString()).toBe(
+        verifyResponse.body.payload.issuedAt
+      );
+      expect(
+        new Date(verifyResponse.body.payload.expiresAt).toISOString()
+      ).toBe(verifyResponse.body.payload.expiresAt);
     });
 
     it('should reject expired token', async () => {
@@ -201,7 +203,7 @@ describe('OAuth API', () => {
       );
 
       // Wait to ensure expiration
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const response = await request(app)
         .post('/oauth/verify')
@@ -211,8 +213,9 @@ describe('OAuth API', () => {
       expect(response.body.valid).toBe(false);
       expect(response.body.error).toBe('Token expired');
       expect(response.body.expiredAt).toBeDefined();
-      expect(new Date(response.body.expiredAt).toISOString())
-        .toBe(response.body.expiredAt);
+      expect(new Date(response.body.expiredAt).toISOString()).toBe(
+        response.body.expiredAt
+      );
     });
 
     it('should reject token with invalid signature', async () => {
@@ -245,13 +248,11 @@ describe('OAuth API', () => {
 
     it('should reject refresh token', async () => {
       // Get tokens
-      const tokenResponse = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: testClientId,
-          client_secret: testClientSecret
-        });
+      const tokenResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: testClientId,
+        client_secret: testClientSecret
+      });
 
       // Try to verify refresh token
       const response = await request(app)
@@ -261,7 +262,9 @@ describe('OAuth API', () => {
 
       expect(response.body.valid).toBe(false);
       expect(response.body.error).toBe('Invalid token type');
-      expect(response.body.message).toBe('Only access tokens can be verified at this endpoint');
+      expect(response.body.message).toBe(
+        'Only access tokens can be verified at this endpoint'
+      );
     });
 
     it('should reject malformed token', async () => {
@@ -277,27 +280,23 @@ describe('OAuth API', () => {
 
     it('should include 3Scale info in verified payload', async () => {
       // Create app with 3Scale enabled
-      const app3scale = await request(app)
-        .post('/applications')
-        .send({
-          applicationName: 'VerifyOAuth3ScaleApp',
-          description: 'Test',
-          clientSecret: 'secret-verify-3scale',
-          financialId: 'FIN-VERIFY-3SCALE',
-          channelId: 'CH-001',
-          isDeveloperPortalAPIsEnabled: true,
-          threeScaleClientId: '3scale-verify-123',
-          threeScaleClientSecret: '3scale-verify-secret'
-        });
+      const app3scale = await request(app).post('/applications').send({
+        applicationName: 'VerifyOAuth3ScaleApp',
+        description: 'Test',
+        clientSecret: 'secret-verify-3scale',
+        financialId: 'FIN-VERIFY-3SCALE',
+        channelId: 'CH-001',
+        isDeveloperPortalAPIsEnabled: true,
+        threeScaleClientId: '3scale-verify-123',
+        threeScaleClientSecret: '3scale-verify-secret'
+      });
 
       // Get token
-      const tokenResponse = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: app3scale.body.clientId,
-          client_secret: 'secret-verify-3scale'
-        });
+      const tokenResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: app3scale.body.clientId,
+        client_secret: 'secret-verify-3scale'
+      });
 
       // Verify token
       const verifyResponse = await request(app)
@@ -306,10 +305,16 @@ describe('OAuth API', () => {
         .expect(200);
 
       expect(verifyResponse.body.valid).toBe(true);
-      expect(verifyResponse.body.payload.isDeveloperPortalAPIsEnabled).toBe(true);
-      expect(verifyResponse.body.payload.threeScaleClientId).toBe('3scale-verify-123');
+      expect(verifyResponse.body.payload.isDeveloperPortalAPIsEnabled).toBe(
+        true
+      );
+      expect(verifyResponse.body.payload.threeScaleClientId).toBe(
+        '3scale-verify-123'
+      );
       // threeScaleClientSecret should NEVER be in response
-      expect(verifyResponse.body.payload.threeScaleClientSecret).toBeUndefined();
+      expect(
+        verifyResponse.body.payload.threeScaleClientSecret
+      ).toBeUndefined();
     });
   });
 
@@ -370,13 +375,11 @@ describe('OAuth API', () => {
 
     it('should reject revoked refresh token', async () => {
       // Step 1: Get initial token pair
-      const initialResponse = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: testClientId,
-          client_secret: testClientSecret
-        });
+      const initialResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: testClientId,
+        client_secret: testClientSecret
+      });
 
       const refreshToken = initialResponse.body.refresh_token;
 
@@ -401,13 +404,11 @@ describe('OAuth API', () => {
 
     it('should reject access token when refresh token is required', async () => {
       // Get token pair
-      const tokenResponse = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: testClientId,
-          client_secret: testClientSecret
-        });
+      const tokenResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: testClientId,
+        client_secret: testClientSecret
+      });
 
       // Try to use access token for refresh
       const response = await request(app)
@@ -423,27 +424,23 @@ describe('OAuth API', () => {
 
     it('should maintain 3Scale info when refreshing token', async () => {
       // Create app with 3Scale enabled
-      const app3scale = await request(app)
-        .post('/applications')
-        .send({
-          applicationName: 'RefreshOAuth3ScaleApp',
-          description: 'Test',
-          clientSecret: 'secret-refresh-3scale',
-          financialId: 'FIN-REFRESH-3SCALE',
-          channelId: 'CH-001',
-          isDeveloperPortalAPIsEnabled: true,
-          threeScaleClientId: '3scale-refresh-123',
-          threeScaleClientSecret: '3scale-refresh-secret'
-        });
+      const app3scale = await request(app).post('/applications').send({
+        applicationName: 'RefreshOAuth3ScaleApp',
+        description: 'Test',
+        clientSecret: 'secret-refresh-3scale',
+        financialId: 'FIN-REFRESH-3SCALE',
+        channelId: 'CH-001',
+        isDeveloperPortalAPIsEnabled: true,
+        threeScaleClientId: '3scale-refresh-123',
+        threeScaleClientSecret: '3scale-refresh-secret'
+      });
 
       // Get initial token pair
-      const initialResponse = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: app3scale.body.clientId,
-          client_secret: 'secret-refresh-3scale'
-        });
+      const initialResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: app3scale.body.clientId,
+        client_secret: 'secret-refresh-3scale'
+      });
 
       // Refresh access token
       const refreshResponse = await request(app)
@@ -467,13 +464,11 @@ describe('OAuth API', () => {
     let validRefreshToken: string;
 
     beforeAll(async () => {
-      const tokenResponse = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: testClientId,
-          client_secret: testClientSecret
-        });
+      const tokenResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: testClientId,
+        client_secret: testClientSecret
+      });
 
       validAccessToken = tokenResponse.body.access_token;
       validRefreshToken = tokenResponse.body.refresh_token;
@@ -481,13 +476,11 @@ describe('OAuth API', () => {
 
     it('should revoke access token', async () => {
       // Get a new token for this test
-      const tokenResponse = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: testClientId,
-          client_secret: testClientSecret
-        });
+      const tokenResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: testClientId,
+        client_secret: testClientSecret
+      });
 
       const accessToken = tokenResponse.body.access_token;
 
@@ -512,13 +505,11 @@ describe('OAuth API', () => {
 
     it('should revoke refresh token', async () => {
       // Get a new token pair for this test
-      const tokenResponse = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: testClientId,
-          client_secret: testClientSecret
-        });
+      const tokenResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: testClientId,
+        client_secret: testClientSecret
+      });
 
       const refreshToken = tokenResponse.body.refresh_token;
 
@@ -545,13 +536,11 @@ describe('OAuth API', () => {
 
     it('should accept revocation with reason', async () => {
       // Get a new token for this test
-      const tokenResponse = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: testClientId,
-          client_secret: testClientSecret
-        });
+      const tokenResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: testClientId,
+        client_secret: testClientSecret
+      });
 
       const response = await request(app)
         .post('/oauth/revoke')
@@ -576,20 +565,16 @@ describe('OAuth API', () => {
 
     it('should handle revoking already revoked token', async () => {
       // Get a new token for this test
-      const tokenResponse = await request(app)
-        .post('/oauth/token')
-        .send({
-          grant_type: 'client_credentials',
-          client_id: testClientId,
-          client_secret: testClientSecret
-        });
+      const tokenResponse = await request(app).post('/oauth/token').send({
+        grant_type: 'client_credentials',
+        client_id: testClientId,
+        client_secret: testClientSecret
+      });
 
       const accessToken = tokenResponse.body.access_token;
 
       // Revoke once
-      await request(app)
-        .post('/oauth/revoke')
-        .send({ token: accessToken });
+      await request(app).post('/oauth/revoke').send({ token: accessToken });
 
       // Revoke again
       const response = await request(app)

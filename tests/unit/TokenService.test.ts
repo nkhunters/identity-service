@@ -2,13 +2,13 @@ import 'reflect-metadata';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Container } from 'typedi';
 import jwt from 'jsonwebtoken';
-import { TokenService } from '../../src/services/TokenService.js';
-import { ApplicationService } from '../../src/services/ApplicationService.js';
-import { EncryptionService } from '../../src/services/EncryptionService.js';
-import { RefreshToken } from '../../src/models/RefreshToken.model.js';
-import { RevokedToken } from '../../src/models/RevokedToken.model.js';
-import { Application } from '../../src/models/Application.model.js';
-import { connectDatabase, disconnectDatabase } from '../../src/config/database.js';
+import { TokenService } from '../../src/services/TokenService';
+import { ApplicationService } from '../../src/services/ApplicationService';
+import { EncryptionService } from '../../src/services/EncryptionService';
+import { RefreshToken } from '../../src/models/RefreshToken.model';
+import { RevokedToken } from '../../src/models/RevokedToken.model';
+import { Application } from '../../src/models/Application.model';
+import { connectDatabase, disconnectDatabase } from '../../src/config/database';
 
 describe('TokenService', () => {
   let tokenService: TokenService;
@@ -89,7 +89,9 @@ describe('TokenService', () => {
       const tokens = await tokenService.generateTokenPair(app);
       const refreshPayload = jwt.decode(tokens.refreshToken) as any;
 
-      const storedToken = await RefreshToken.findOne({ jti: refreshPayload.jti });
+      const storedToken = await RefreshToken.findOne({
+        jti: refreshPayload.jti
+      });
 
       expect(storedToken).not.toBeNull();
       expect(storedToken?.token).not.toBe(tokens.refreshToken); // Hashed
@@ -175,7 +177,7 @@ describe('TokenService', () => {
       );
 
       // Wait a moment to ensure token is expired
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       await expect(
         tokenService.verifyAccessToken(expiredToken)
@@ -271,7 +273,9 @@ describe('TokenService', () => {
       const tokens = await tokenService.generateTokenPair(app);
 
       // Refresh the access token
-      const newAccessToken = await tokenService.refreshAccessToken(tokens.refreshToken);
+      const newAccessToken = await tokenService.refreshAccessToken(
+        tokens.refreshToken
+      );
 
       expect(newAccessToken).toBeDefined();
       expect(newAccessToken).not.toBe(tokens.accessToken); // Should be a new token
@@ -337,7 +341,7 @@ describe('TokenService', () => {
       );
 
       // Wait to ensure token is expired
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Attempt to refresh should fail
       await expect(
@@ -393,7 +397,9 @@ describe('TokenService', () => {
       const tokens = await tokenService.generateTokenPair(app);
 
       // Refresh access token
-      const newAccessToken = await tokenService.refreshAccessToken(tokens.refreshToken);
+      const newAccessToken = await tokenService.refreshAccessToken(
+        tokens.refreshToken
+      );
 
       // Verify 3Scale info is maintained
       const newPayload = await tokenService.verifyAccessToken(newAccessToken);
@@ -441,7 +447,9 @@ describe('TokenService', () => {
       });
 
       const tokens = await tokenService.generateTokenPair(app);
-      const payload = await tokenService.verifyRefreshToken(tokens.refreshToken);
+      const payload = await tokenService.verifyRefreshToken(
+        tokens.refreshToken
+      );
 
       // Revoke refresh token
       const result = await tokenService.revokeToken(tokens.refreshToken);
@@ -537,7 +545,10 @@ describe('TokenService', () => {
       await tokenService.generateTokenPair(app);
 
       // Revoke all tokens
-      const count = await tokenService.revokeAllTokensForClient(app.clientId, 'Test cleanup');
+      const count = await tokenService.revokeAllTokensForClient(
+        app.clientId,
+        'Test cleanup'
+      );
 
       expect(count).toBe(3);
 

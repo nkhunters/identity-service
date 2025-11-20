@@ -1,7 +1,13 @@
 import { Service } from 'typedi';
-import { scrypt, randomBytes, timingSafeEqual, createCipheriv, createDecipheriv } from 'crypto';
+import {
+  scrypt,
+  randomBytes,
+  timingSafeEqual,
+  createCipheriv,
+  createDecipheriv
+} from 'crypto';
 import { promisify } from 'util';
-import { env } from '../config/env.js';
+import { env } from '../config/env';
 
 const scryptAsync = promisify(scrypt);
 

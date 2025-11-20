@@ -1,6 +1,6 @@
-import { AuthenticatedRequest } from '../types/AuthenticatedRequest.js';
-import { ForbiddenError } from './errors.js';
-import { logger } from './logger.js';
+import { AuthenticatedRequest } from '../types/AuthenticatedRequest';
+import { ForbiddenError } from './errors';
+import { logger } from './logger';
 
 /**
  * Authorization Helper Functions
@@ -24,7 +24,7 @@ export function requireTools(req: AuthenticatedRequest, tools: string[]): void {
   }
 
   const userTools = req.user.allowedTools || [];
-  const hasAllTools = tools.every(tool => userTools.includes(tool));
+  const hasAllTools = tools.every((tool) => userTools.includes(tool));
 
   if (!hasAllTools) {
     logger.warn(
@@ -55,7 +55,7 @@ export function requireApis(req: AuthenticatedRequest, apis: string[]): void {
   }
 
   const userApis = req.user.allowedApis || [];
-  const hasAllApis = apis.every(api => userApis.includes(api));
+  const hasAllApis = apis.every((api) => userApis.includes(api));
 
   if (!hasAllApis) {
     logger.warn(
@@ -80,13 +80,16 @@ export function requireApis(req: AuthenticatedRequest, apis: string[]): void {
  * @param tools - Array of tool identifiers (user needs at least one)
  * @throws ForbiddenError if user has none of the required tools
  */
-export function requireAnyTool(req: AuthenticatedRequest, tools: string[]): void {
+export function requireAnyTool(
+  req: AuthenticatedRequest,
+  tools: string[]
+): void {
   if (!req.user) {
     throw new ForbiddenError('Not authenticated');
   }
 
   const userTools = req.user.allowedTools || [];
-  const hasAnyTool = tools.some(tool => userTools.includes(tool));
+  const hasAnyTool = tools.some((tool) => userTools.includes(tool));
 
   if (!hasAnyTool) {
     logger.warn(
@@ -98,9 +101,7 @@ export function requireAnyTool(req: AuthenticatedRequest, tools: string[]): void
       'No matching tool permissions'
     );
 
-    throw new ForbiddenError(
-      `Required at least one of: ${tools.join(', ')}`
-    );
+    throw new ForbiddenError(`Required at least one of: ${tools.join(', ')}`);
   }
 }
 
@@ -117,7 +118,7 @@ export function requireAnyApi(req: AuthenticatedRequest, apis: string[]): void {
   }
 
   const userApis = req.user.allowedApis || [];
-  const hasAnyApi = apis.some(api => userApis.includes(api));
+  const hasAnyApi = apis.some((api) => userApis.includes(api));
 
   if (!hasAnyApi) {
     logger.warn(
@@ -129,8 +130,6 @@ export function requireAnyApi(req: AuthenticatedRequest, apis: string[]): void {
       'No matching API permissions'
     );
 
-    throw new ForbiddenError(
-      `Required at least one of: ${apis.join(', ')}`
-    );
+    throw new ForbiddenError(`Required at least one of: ${apis.join(', ')}`);
   }
 }

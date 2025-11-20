@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { TokenPayload } from './TokenPayload.js';
+import { TokenPayload } from './TokenPayload';
 
 /**
  * Extended Express Request interface with authenticated user payload
